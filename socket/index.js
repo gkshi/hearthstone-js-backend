@@ -1,5 +1,5 @@
 module.exports = function (http, context) {
-  const globalEmit = require('./helpers/emit.ts')(context)
+  const globalEmit = require('../helpers/emit.js')(context)
 
   const io = require('socket.io')(http, {
     cors: {
@@ -12,13 +12,16 @@ module.exports = function (http, context) {
     // console.log('middleware:', handshakeData._query)
     console.log('<< middleware: socket.id', socket.id)
     context.clients.push(socket)
-    // console.log('clients', context.clients)
-    console.log('context.game.config.players.number', context.game.config.players.number)
-    console.log('context.clients.length', context.clients.length)
-    if (context.game.config.players.number === context.clients.length) {
+
+    // All clients are disconnected, resetting the game
+    if (!context.clients.length) {
+      context.game.reset()
+    }
+
+    // Max clients number passed, starting a game
+    if (context.config.game.heroes.number === context.clients.length) {
       context.game.init()
     }
-    // checkRoom()
     next()
   })
 
@@ -32,7 +35,7 @@ module.exports = function (http, context) {
         hero
       })
 
-      if (context.game.players.length === context.game.config.players.number) {
+      if (context.game.players.length === context.config.players.number) {
         globalEmit('game-start', context.game.players)
       }
     })
@@ -41,7 +44,6 @@ module.exports = function (http, context) {
       console.log('<< disconnected', socket.id)
       const i = context.clients.indexOf(socket)
       context.clients.splice(i, 1)
-      // console.log('clients', context.clients)
     })
   })
 
