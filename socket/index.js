@@ -7,10 +7,11 @@ module.exports = function (http, context) {
 
   io.use(function (socket, next) {
     const handshakeData = socket.request
+    const sessionId = +handshakeData._query?.sessionId || null
     context.clients.push(socket)
 
-    console.log('connected:', socket.id, handshakeData._query.sessionId)
-    const gameClient = context.game.clients.find(client => +client.sessionId === +handshakeData._query.sessionId)
+    console.log('connected:', socket.id, sessionId)
+    const gameClient = context.game.clients.find(client => +client.sessionId === sessionId)
 
     if (gameClient) {
       console.log('return to the game here')
@@ -21,7 +22,7 @@ module.exports = function (http, context) {
         socketId: socket.id,
         status: 'connected'
       })
-      context.emit.toClient(handshakeData._query.sessionId, 'reconnect', context.game.getState())
+      context.emit.toClient(sessionId, 'reconnect', context.game.getState())
     }
 
     // Max clients number passed, starting a game
@@ -50,9 +51,11 @@ module.exports = function (http, context) {
       console.log('disconnected:', socket.id)
 
       const client = context.game.getClient(null, socket.id)
-      context.game.updatePlayer(client.sessionId, {
-        status: 'disconnected'
-      })
+      if (client) {
+        context.game.updatePlayer(client.sessionId, {
+          status: 'disconnected'
+        })
+      }
 
       const i = context.clients.indexOf(socket)
       context.clients.splice(i, 1)

@@ -20,7 +20,7 @@ module.exports = function (context) {
       heroes: []
     },
     turn: 0,
-    _status: 'not-ready',
+    status: 'not-ready',
     _inited: false
   })
 
@@ -144,16 +144,12 @@ module.exports = function (context) {
     }
 
     updatePlayer (sessionId, payload) {
-      console.log('update player:', sessionId, payload)
       const player = this.getPlayer(sessionId)
-      console.log('player found:', player)
       if (!player) {
         console.warn('[GAME: updatePlayer] No player found with sessionId', sessionId)
         return
       }
-      console.log('payload keys', Object.keys(payload))
       Object.keys(payload).forEach(key => {
-        console.log('player[key]', player[key], key)
         player[key] = payload[key]
       })
     }
