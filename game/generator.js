@@ -50,8 +50,8 @@ module.exports = function (context) {
       return this._random(result, length)
     }
 
-    _random (array = [], number = 1) {
-      const from = [...array]
+    _random (array = [], number = 1, withSplice = false) {
+      const from = withSplice ? array : [...array]
       const res = []
       for (let i = 0; i < number; i++) {
         const randomIndex = Math.floor(Math.random() * from.length)

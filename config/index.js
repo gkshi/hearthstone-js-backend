@@ -12,7 +12,8 @@ module.exports = {
       number: 3
     },
     heroes: {
-      number: playersNumber
+      number: playersNumber,
+      numberToPick: 2
     }
   }
 }
