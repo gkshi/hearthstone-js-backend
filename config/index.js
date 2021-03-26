@@ -14,6 +14,12 @@ module.exports = {
     heroes: {
       number: playersNumber,
       numberToPick: 2
+    },
+    deck: {
+      copies: {
+        default: 3,
+        legendary: 3
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-function normalizeProps (props = 'any') {
+function normalizeGroupProps (props = 'any') {
   if (typeof props === 'string') {
     return {
       alias: props
@@ -9,7 +9,7 @@ function normalizeProps (props = 'any') {
 
 class Group {
   constructor (props) {
-    props = normalizeProps(props)
+    props = normalizeGroupProps(props)
     this.id = props.id || require('../../helpers/id')()
     this.name = props.name || ''
     this.alias = props.alias || ''

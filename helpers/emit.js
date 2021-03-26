@@ -2,6 +2,13 @@ module.exports = function (context) {
   return {
     global (name, data) {
       console.log('emitGlobal', name, data)
+      context.clients.forEach(client => {
+        client.emit(name, data)
+      })
+    },
+
+    toPlayers (name, data) {
+      console.log('emitGlobal', name, data)
       context.game.clients.forEach(client => {
         client.socket.emit(name, data)
       })

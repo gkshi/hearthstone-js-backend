@@ -19,6 +19,7 @@ module.exports = function (context) {
       groups: [],
       heroes: []
     },
+    deck: [],
     turn: 0,
     status: 'not-ready',
     _inited: false
@@ -41,14 +42,15 @@ module.exports = function (context) {
       this.setClients(clients)
       // console.log('clients setting', this.clients)
 
-      context.emit.global('game-status', 'preparing')
+      context.emit.toPlayers('game-status', 'preparing')
 
       // Генерация оригинальных наборов на первом месте
       this.generateOriginalSets()
       this.defineActiveGroups()
+      this.generateCardDeck()
 
       this.sendHeroPicks()
-      context.emit.global('game-status', 'hero-pick')
+      context.emit.toPlayers('game-status', 'hero-pick')
 
       this.status = 'preparing'
     }
@@ -86,10 +88,11 @@ module.exports = function (context) {
       }
     }
 
-    setClients (clients) {
+    setClients (clients = []) {
       this.clients = clients.map(client => ({
         sessionId: sessionId(),
-        socket: client
+        socket: client,
+        disconnected: false
       }))
 
       this.clients.forEach(client => {
@@ -118,12 +121,17 @@ module.exports = function (context) {
     }
 
     generateOriginalSets () {
-      this.sets.groups = generator.allGroups(context.config.game.groups.number)
-      this.sets.heroes = generator.allHeroes(context.config.game.heroes.number)
+      this.sets.groups = generator.allGroups()
+      this.sets.heroes = generator.allHeroes()
+      console.log('<< this.sets.heroes', this.sets.heroes)
     }
 
     defineActiveGroups () {
-      this.groups = generator.groups(context.config.game.groups.number)
+      this.groups = generator.groups(this.sets.groups, context.config.game.groups.number)
+    }
+
+    generateCardDeck () {
+      this.deck = generator.gameDeck()
     }
 
     addPlayer (sessionId, socketId, heroId) {
@@ -132,7 +140,7 @@ module.exports = function (context) {
         sessionId,
         socketId,
         hero,
-        status: 'active'
+        status: 'connected'
       })
     }
 
@@ -159,6 +167,7 @@ module.exports = function (context) {
      */
     sendHeroPicks () {
       let all = [...this.sets.heroes]
+      console.log('all heroes', all)
       this.clients.forEach(client => {
         const set = generator._random(all, context.config.game.heroes.numberToPick, true)
         // console.log('set', set)

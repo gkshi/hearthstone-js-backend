@@ -1,5 +1,19 @@
 # backend-vue3-js
 
+## Game events
+* card-recruited
+* hand-card-added
+* hand-card-removed
+
+## Card events
+* recruit
+* hand-add
+* play
+* die
+* reborn
+* hit
+* getting-hit
+
 ## Project setup
 ```
 npm i

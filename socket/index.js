@@ -11,24 +11,34 @@ module.exports = function (http, context) {
     context.clients.push(socket)
 
     console.log('connected:', socket.id, sessionId)
-    const gameClient = context.game.clients.find(client => +client.sessionId === sessionId)
+    const gameExistingClient = context.game.getClient(sessionId)
+    const gameExistingPlayer = context.game.getPlayer(sessionId)
 
-    if (gameClient) {
+    if (gameExistingClient && gameExistingPlayer) {
+      if (gameExistingPlayer.status === 'capitulated') {
+        console.log('player has been capitulated')
+        return
+      }
       console.log('return to the game here')
-      context.game.updateClient(gameClient.sessionId, {
+      context.game.updateClient(gameExistingClient.sessionId, {
         socket: socket
       })
-      context.game.updatePlayer(gameClient.sessionId, {
+      context.game.updatePlayer(gameExistingClient.sessionId, {
         socketId: socket.id,
         status: 'connected'
       })
       context.emit.toClient(sessionId, 'reconnect', context.game.getState())
     }
 
+    context.emit.global('clients-status', {
+      clients: context.clients.length,
+      findingGameClients: context.findingGameClients.length
+    })
+
     // Max clients number passed, starting a game
-    if (context.config.game.heroes.number === context.clients.length && !context.game._inited) {
-      context.game.init(context.clients)
-    }
+    // if (context.config.game.heroes.number === context.clients.length && !context.game._inited) {
+    //   context.game.init(context.clients)
+    // }
     next()
   })
 
@@ -43,7 +53,33 @@ module.exports = function (http, context) {
       context.game.addPlayer(client.sessionId, socket.id, heroId)
 
       if (context.game.players.length === context.config.lobby.players.number) {
-        context.emit.global('game-start', context.game.players)
+        context.emit.toPlayers('game-start', context.game.players)
+      }
+    })
+
+    socket.on('clients-status', () => {
+      socket.emit('clients-status', {
+        clients: context.clients.length,
+        findingGameClients: context.findingGameClients.length
+      })
+    })
+
+    socket.on('find-game', () => {
+      console.log('find-game', socket.id)
+      context.findingGameClients.push(socket)
+      if (context.config.game.heroes.number === context.findingGameClients.length && !context.game._inited) {
+        context.game.init(context.clients)
+        context.findingGameClients = []
+      }
+    })
+
+    socket.on('capitulate', () => {
+      console.log('capitulate', socket.id)
+      const client = context.game.getClient(null, socket.id)
+      if (client) {
+        context.game.updatePlayer(client.sessionId, {
+          status: 'capitulated'
+        })
       }
     })
 
@@ -66,7 +102,13 @@ module.exports = function (http, context) {
       if (!context.clients.length) {
         console.log('no clients, reset game')
         context.game.reset()
+        return
       }
+
+      context.emit.global('clients-status', {
+        clients: context.clients.length,
+        findingGameClients: context.findingGameClients.length
+      })
     })
   })
 
